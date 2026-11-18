@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>トイレットペーパー計算ツール</title>
+
+<style>
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  max-width: 350px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* タイトル */
+h1 {
+  font-size: 1.3em;
+  margin-bottom: 10px;
+}
+
+/* 見出し */
+h2 {
+  margin-top: 24px;
+  font-size: 1.15em;
+}
+
+/* 入力行 */
+label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  margin-top: 10px;
+  border-radius: 5px;
+}
+
+/* グレーと白 */
+.row-gray { background: #f7f7f7; }
+.row-white { background: #ffffff; }
+
+/* ラベル幅 */
+label span {
+  width: 120px;
+}
+
+/* 入力欄 */
+label input, label select {
+  width: 130px;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+/* ボタン */
+button {
+  margin-top: 15px;
+  padding: 10px;
+  width: 48%;
+}
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* 結果 */
+.result {
+  margin-top: 25px;
+  background: #f7f7f7;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* 注意文 */
+.note {
+  font-size: 0.85em;
+  color: #444;
+  margin-top: 10px;
+}
+</style>
+
+</head>
+<body>
+
+<h1>トイレットペーパー計算ツール</h1>
+
+<!-- 製品① -->
+<h2>製品①</h2>
+
+<label class="row-gray"><span>ロール数</span>
+  <input type="number" id="roll1" />
+</label>
+
+<label class="row-white"><span>1ロールの長さ(m)</span>
+  <input type="number" step="0.1" id="len1" />
+</label>
+
+<label class="row-gray"><span>シングル/ダブル</span>
+  <select id="type1">
+    <option value="single">シングル</option>
+    <option value="double">ダブル</option>
+  </select>
+</label>
+
+<label class="row-white"><span>価格(円)</span>
+  <input type="number" id="price1" />
+</label>
+
+<p class="note">
+※送料を含む価格を入力してください。<br>
+※値引きクーポンやポイント等はあらかじめ差し引いた金額を入力してください。<br>
+※ダブルは長さを2倍として計算します。
+</p>
+
+<!-- 製品② -->
+<h2>製品②</h2>
+
+<label class="row-gray"><span>ロール数</span>
+  <input type="number" id="roll2" />
+</label>
+
+<label class="row-white"><span>1ロールの長さ(m)</span>
+  <input type="number" step="0.1" id="len2" />
+</label>
+
+<label class="row-gray"><span>シングル/ダブル</span>
+  <select id="type2">
+    <option value="single">シングル</option>
+    <option value="double">ダブル</option>
+  </select>
+</label>
+
+<label class="row-white"><span>価格(円)</span>
+  <input type="number" id="price2" />
+</label>
+
+<div class="button-container">
+  <button onclick="calc()">結果を表示</button>
+  <button onclick="saveData()">保存する</button>
+</div>
+
+<div class="result" id="result"></div>
+
+<p class="note">本ツールの結果はあくまでも目安です。</p>
+
+<script>
+// 小数第2位以下を切り捨て
+function floor2(num) {
+  return Math.floor(num * 100) / 100;
+}
+
+// 保存データ復元
+window.onload = function () {
+  const saved = localStorage.getItem('tpCalcData');
+  if (!saved) return;
+
+  const data = JSON.parse(saved);
+  const ids = ['roll1','len1','type1','price1','roll2','len2','type2','price2'];
+
+  ids.forEach(id => {
+    if (data[id] !== undefined) document.getElementById(id).value = data[id];
+  });
+
+  if (data.resultHTML) {
+    document.getElementById('result').innerHTML = data.resultHTML;
+  }
+};
+
+function calc() {
+  const roll1  = Number(document.getElementById('roll1').value);
+  const len1   = Number(document.getElementById('len1').value);
+  const type1  = document.getElementById('type1').value;
+  const price1 = Number(document.getElementById('price1').value);
+
+  const roll2  = Number(document.getElementById('roll2').value);
+  const len2   = Number(document.getElementById('len2').value);
+  const type2  = document.getElementById('type2').value;
+  const price2 = Number(document.getElementById('price2').value);
+
+  if (!roll1 || !len1 || !price1 || !roll2 || !len2 || !price2) {
+    document.getElementById('result').innerHTML = '全ての項目を入力してください。';
+    return;
+  }
+
+  // ダブルは長さ2倍
+  const realLen1 = (type1 === "double") ? len1 * 2 : len1;
+  const realLen2 = (type2 === "double") ? len2 * 2 : len2;
+
+  const total1 = floor2(roll1 * realLen1);
+  const total2 = floor2(roll2 * realLen2);
+
+  const perYen1 = floor2(total1 / price1);
+  const perYen2 = floor2(total2 / price2);
+
+  let better = "";
+  if (perYen1 > perYen2) better = "製品①の方がコスパが良いです。";
+  else if (perYen2 > perYen1) better = "製品②の方がコスパが良いです。";
+  else better = "どちらも同じコスパです。";
+
+  const html = `
+    総長さ①: ${total1} m<br>
+    総長さ②: ${total2} m<br>
+    1円あたり①: ${perYen1} m/円<br>
+    1円あたり②: ${perYen2} m/円<br>
+    ${better}<br><br>
+    <span style="font-size:0.85em;color:#444;">
+      ※すべて小数点第2位以下を切り捨てています。
+    </span>
+  `;
+
+  document.getElementById('result').innerHTML = html;
+}
+
+function saveData() {
+  const ids = ['roll1','len1','type1','price1','roll2','len2','type2','price2'];
+
+  const data = {};
+  ids.forEach(id => data[id] = document.getElementById(id).value);
+
+  data.resultHTML = document.getElementById('result').innerHTML;
+
+  localStorage.setItem('tpCalcData', JSON.stringify(data));
+  alert('データを保存しました。');
+}
+</script>
+
+</body>
+</html>
