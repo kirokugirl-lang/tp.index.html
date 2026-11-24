@@ -222,7 +222,13 @@ function calc() {
     <span style="font-size:0.85em;color:#444;">
       ※すべて小数点第2位以下を切り捨てています。
     </span>
-  `;
+  <h2>計算方法</h2>
+<ul>
+  <li>総延長（m）＝ ロール数 × 1ロールの長さ</li>
+  <li>ダブルの場合は、長さを2倍として計算します。</li>
+  <li>1円あたりの総延長 ＝ 総延長 ÷ 価格</li>
+</ul>
+<p>1円あたりの総延長が長い商品ほど、価格に対して使える長さが多く、お得と判断できます。</p>`;
 
   document.getElementById('result').innerHTML = html;
 }
